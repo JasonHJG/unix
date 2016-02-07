@@ -1,0 +1,26 @@
+From fb1fb70d5ba828c81c67004334f1d91d2acae1a3 Mon Sep 17 00:00:00 2001
+From: JasonHJG <jinganghe@g.ucla.edu>
+Date: Sun, 7 Feb 2016 01:29:07 -0800
+Subject: [PATCH] 2016-02-07  Jingang He  <classjhe@lnxsrv04.seas.ucla.edu>
+
+	* timespec.h: This is a debugged version
+---
+ timespec.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/timespec.h b/timespec.h
+index 9c630b8..4f565df 100644
+--- a/timespec.h
++++ b/timespec.h
+@@ -45,7 +45,7 @@ struct timespec
+ static inline int
+ timespec_cmp (struct timespec a, struct timespec b)
+ {
+-  int diff = a.tv_sec - b.tv_sec;
++  long long diff = a.tv_sec - b.tv_sec;
+   return diff ? diff : a.tv_nsec - b.tv_nsec;
+ }
+ 
+-- 
+1.8.5.3
+
