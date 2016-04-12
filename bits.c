@@ -147,19 +147,212 @@ NOTES:
 
 #endif
 /*
- * ezThreeFourths - multiplies by 3/4 rounding toward 0,
- *   Should exactly duplicate effect of C expression (x*3/4),
- *   including overflow behavior.
- *   Examples: ezThreeFourths(11) = 8
- *             ezThreeFourths(-9) = -6
- *             ezThreeFourths(1073741824) = -268435456 (overflow)
+ * bitParity - returns 1 if x contains an odd number of 0's
+ *   Examples: bitParity(5) = 0, bitParity(7) = 1
  *   Legal ops: ! ~ & ^ | + << >>
- *   Max ops: 12
+ *   Max ops: 20
+ *   Rating: 4
+ */
+int bitParity(int x) {
+       /*
+   notice that C=A^B will return the same oddity of 0
+   we thus can use this and split the number
+       */
+       int half1 = x>>16;
+       int result1 = x ^ half1;
+       /* the right 16 degits determine */
+
+       
+       int half2 = result1 >> 8;
+       int result2 = result1 ^ half2;
+       /* right 8 */
+
+       
+       int half3 = result2 >>4;
+       int result3 = result2 ^ half3;
+       /* right 4 */
+
+       int half4 = result3 >>2;
+       int result4 = result3 ^ half4;
+       /* right 2 */
+
+       int temp = (result4>>1)^(result4);
+       int result=temp & 1;
+  return result ;
+}
+/* 
+ * rotateRight - Rotate x to the right by n
+ *   Can assume that 0 <= n <= 31
+ *   Examples: rotateRight(0x87654321,4) = 0x76543218
+ *   Legal ops: ~ & ^ | + << >>
+ *   Max ops: 25
+ *   Rating: 3 
+ */
+int rotateRight(int x, int n) {
+ 
+  int part1= x >> n;
+  int part2=( x <<(32+(~n))) << 1;
+  int complement=((~0) << (32+(~n)))<< 1;
+  int part3= part1 & (~ complement);
+  
+  return (part2 | part3);
+  
+}
+/* 
+ * byteSwap - swaps the nth byte and the mth byte
+ *  Examples: byteSwap(0x12345678, 1, 3) = 0x56341278
+ *            byteSwap(0xDEADBEEF, 0, 2) = 0xDEEFBEAD
+ *  You may assume that 0 <= n <= 3, 0 <= m <= 3
+ *  Legal ops: ! ~ & ^ | + << >>
+ *  Max ops: 25
+ *  Rating: 2
+ */
+int byteSwap(int x, int n, int m) {
+
+ 
+  int s1=0xff << (n << 3);
+  int s2=0xff << (m << 3);
+  int k1=s1 & x;
+  int k2=s2 & x;
+  int p1=(k1 >>( n<<3)) & 0xff;
+  int p2=(k2 >>( m<<3)) & 0xff;
+  int r1=p1 << (m << 3);
+  int r2=p2 << (n << 3);
+  int r3=(~(s1 | s2)) & x;
+  return (r1 | r2 | r3);
+}
+/* 
+ * fitsShort - return 1 if x can be represented as a 
+ *   16-bit, two's complement integer.
+ *   Examples: fitsShort(33000) = 0, fitsShort(-32768) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 8
+ *   Rating: 1
+ */
+int fitsShort(int x) {
+  int temp1= x & ((~ 1)<< 14 );
+  int temp= 1<< 15;
+  int temp2= temp1 + (temp);
+  int temp3= temp2 & (~temp);
+
+  return !(temp3);
+  
+}
+/* 
+ * bitAnd - x&y using only ~ and | 
+ *   Example: bitAnd(6, 5) = 4
+ *   Legal ops: ~ |
+ *   Max ops: 8
+ *   Rating: 1
+ */
+int bitAnd(int x, int y) {
+  /*
+if 1,1 or 0,0   =>  0,0  or 1,1  =>  0 => 1 
+if 0,1 or 1,0   => 1,0   or 0,1  => 1  => 0 
+  */
+  int x1= ~x;
+  int y1= ~y;
+  int temp= x1 | y1;
+  
+  return ~(temp);
+}
+/* 
+ * subOK - Determine if can compute x-y without overflow
+ *   Example: subOK(0x80000000,0x80000000) = 1,
+ *            subOK(0x80000000,0x70000000) = 0, 
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 20
  *   Rating: 3
  */
-int ezThreeFourths(int x) {
-       int y = x+x+x;
-       int sign = y>>31;
-       int z = sign & 3;
-       return (y+z)>>2 ;
+int subOK(int x, int y) {
+  /*
+sign_x=(x>>31)&1  // 0 or 1
+sign_y=(y>>31)&1  // 0 or 1
+0,0 ok
+1,1 ok
+1,0 may not ok    Tmin-sth
+0,1 may not ok    Tmax+sth
+
+x-y  if x -, y+, should have -
+x-y  if x +, y-, should have +
+  */
+  int signX= (x>>31) & 1;
+  int signY= (y>>31) & 1;
+  int diff= x+ (~ y +1);
+  int sign= (diff >> 31) & 1;
+  int conFirst= sign ^ signX;
+  int conSecond= signX ^ signY;
+  return !(conFirst & conSecond);
+}
+/* 
+ * isGreater - if x > y  then return 1, else return 0 
+ *   Example: isGreater(4,5) = 0, isGreater(5,4) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 24
+ *   Rating: 3
+ */
+int isGreater(int x, int y) {
+  int signX=1 & (x>>31);
+  int signY=1 & (y>>31);
+  int diff= signX ^ signY;
+  int conFirst= diff &(1 & (1+ signX));
+  int sign=(y+( ~x +1)) >> 31;
+  int conSecond=sign &(1& (1+ diff));
+  return conFirst | conSecond;
+}
+/* 
+ * fitsBits - return 1 if x can be represented as an 
+ *  n-bit, two's complement integer.
+ *   1 <= n <= 32
+ *   Examples: fitsBits(5,3) = 0, fitsBits(-4,3) = 1
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 15
+ *   Rating: 2
+ */
+int fitsBits(int x, int n) {
+  int shift= 32+(~n+1);
+  int temp= x << shift;
+  int result= temp >> shift;
+  
+  return !(result ^ x) ;
+
+}
+/* 
+ * negate - return -x 
+ *   Example: negate(1) = -1.
+ *   Legal ops: ! ~ & ^ | + << >>
+ *   Max ops: 5
+ *   Rating: 2
+ */
+int negate(int x) {
+  /*
+easy for Tmax ~ -Tmax
+use ~x+1;
+but if Tmin, there is a problem! 
+simply no way to express!
+  */
+  return ~x+1;  
+
+  
+}/*
+ * isTmax - returns 1 if x is the maximum, two's complement number,
+ *     and 0 otherwise 
+ *   Legal ops: ! ~ & ^ | +
+ *   Max ops: 10
+ *   Rating: 1
+ */
+int isTmax(int x) {
+  /*
+  Tmax= 0111 1111
+  Tmin= 1000 0000
+  Tmax  ^ Tmin=1111 1111=-1
+  !(-1+1)=1
+  !(others+1)=0
+  */
+  int Tmin=x+1;
+  int bool=!(Tmin);
+  int min=Tmin | bool;
+  int test=min + x;
+  return !(test+1);
+  
 }
